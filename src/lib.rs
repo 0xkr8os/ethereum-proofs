@@ -29,9 +29,9 @@ mod rstd {
 
 use core::panic;
 
-use hash_db::HashDBRef;
+use hash_db::{HashDBRef, HashDB, Hasher};
 use rstd::{vec::Vec, BTreeMap};
-use trie_db::{DBValue, Result as TrieResult, TrieHash, CError, TrieLayout, HashDB, Hasher, TrieDBBuilder, Recorder, Trie, TrieDB, NibbleSlice};
+use trie_db::{DBValue, Result as TrieResult, TrieHash, CError, TrieLayout, TrieDBBuilder, Recorder, Trie, TrieDB, NibbleSlice};
 
 
 use alloy_primitives::{Address, B256, U256};
