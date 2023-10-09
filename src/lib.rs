@@ -31,7 +31,7 @@ use core::panic;
 
 use hash_db::HashDBRef;
 use rstd::{vec::Vec, BTreeMap};
-use trie_db::{DBValue, Result, Result as TrieResult, TrieHash, CError, TrieLayout, HashDB, Hasher, TrieDBBuilder, Recorder, Trie};
+use trie_db::{DBValue, Result, Result as TrieResult, TrieHash, CError, TrieLayout, HashDB, Hasher, TrieDBBuilder, Recorder, Trie, TrieDB};
 
 
 use alloy_primitives::{Address, B256, U256};
@@ -41,8 +41,10 @@ use types::KeccakHasher;
 pub type StateProofsInput = BTreeMap<Address, Vec<Vec<u8>>>;
 pub type StorageProofsInput = BTreeMap<Address, BTreeMap<U256, Vec<Vec<u8>>>>;
 
+pub type EIP1186TrieDB<'a> = TrieDB<'a, 'a, EIP1186Layout>;
+
 pub fn verify_proof(root: &B256, proofs: &Vec<Vec<u8>>, key: &[u8], value: Option<&[u8]>) {
-    let res = _verify_proof::<EIP1186Layout<KeccakHasher>>(root, proofs, key, value);
+    let res = _verify_proof::<EIP1186Layout>(root, proofs, key, value);
 
     match &res {
         Ok(_) => return,
@@ -62,13 +64,13 @@ pub fn generate_proof(
   db: &dyn HashDBRef<KeccakHasher, DBValue>,
   root: &B256,
   key: &[u8],
-) -> TrieResult<(Vec<Vec<u8>>, Option<Vec<u8>>), TrieHash<EIP1186Layout<KeccakHasher>>, CError<EIP1186Layout<KeccakHasher>>>
+) -> TrieResult<(Vec<Vec<u8>>, Option<Vec<u8>>), TrieHash<EIP1186Layout>, CError<EIP1186Layout>>
 
 {
-  let mut recorder = Recorder::<EIP1186Layout<KeccakHasher>>::new();
+  let mut recorder = Recorder::<EIP1186Layout>::new();
 
   let item = {
-      let trie = TrieDBBuilder::<EIP1186Layout<KeccakHasher>>::new(db, root)
+      let trie = TrieDBBuilder::<EIP1186Layout>::new(db, root)
           .with_recorder(&mut recorder)
           .build();
       trie.get(key)?

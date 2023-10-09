@@ -1,5 +1,6 @@
 use crate::node_codec;
 use crate::rstd::{result::Result, vec::Vec};
+use crate::types::KeccakHasher;
 
 use core::marker::PhantomData;
 use alloy_primitives::B256;
@@ -12,14 +13,14 @@ use trie_db::{
 };
 
 #[derive(Default, Clone)]
-pub struct EIP1186Layout<H>(PhantomData<H>);
+pub struct EIP1186Layout;
 
-impl<H: Hasher<Out = B256>> TrieLayout for EIP1186Layout<H> {
+impl TrieLayout for EIP1186Layout {
     const USE_EXTENSION: bool = true;
     const ALLOW_EMPTY: bool = false;
     const MAX_INLINE_VALUE: Option<u32> = None;
-    type Hash = H;
-    type Codec = node_codec::RlpNodeCodec<H>;
+    type Hash = KeccakHasher;
+    type Codec = node_codec::RlpNodeCodec<KeccakHasher>;
 }
 
 /// Errors that may occur during proof verification. Most of the errors types simply indicate that
