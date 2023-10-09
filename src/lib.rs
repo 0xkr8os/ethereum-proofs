@@ -32,7 +32,7 @@ use core::panic;
 use hash_db::HashDBRef;
 use rstd::{vec::Vec, BTreeMap};
 use trie_db::{DBValue, Result, Result as TrieResult, TrieHash, CError, TrieLayout, HashDB, Hasher, TrieDBBuilder, Recorder, Trie};
-use utils::{keccak256, rlp_encode_storage_value};
+
 
 use alloy_primitives::{Address, B256, U256};
 
