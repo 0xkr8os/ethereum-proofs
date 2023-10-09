@@ -41,7 +41,7 @@ use types::KeccakHasher;
 pub type StateProofsInput = BTreeMap<Address, Vec<Vec<u8>>>;
 pub type StorageProofsInput = BTreeMap<Address, BTreeMap<U256, Vec<Vec<u8>>>>;
 
-pub type EIP1186TrieDB<'a> = TrieDB<'a, 'a, EIP1186Layout>;
+pub type EIP1186TrieDB<'a> = trie_db::TrieDBBuilder<'a, 'a, EIP1186Layout>;
 
 pub fn verify_proof(root: &B256, proofs: &Vec<Vec<u8>>, key: &[u8], value: Option<&[u8]>) {
     let res = _verify_proof::<EIP1186Layout>(root, proofs, key, value);
