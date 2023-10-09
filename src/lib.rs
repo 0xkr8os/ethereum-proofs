@@ -41,7 +41,7 @@ pub use types::KeccakHasher;
 pub type StateProofsInput = BTreeMap<Address, Vec<Vec<u8>>>;
 pub type StorageProofsInput = BTreeMap<Address, BTreeMap<U256, Vec<Vec<u8>>>>;
 
-pub type EIP1186TrieDB<'a, H> = trie_db::TrieDBBuilder<'a, 'a, EIP1186Layout<H>>;
+pub type EthereumTrieDB<'db, H> = trie_db::SecTrieDBMut<'db, EIP1186Layout<H>>;
 
 /// Verify a compact proof for key-value pairs in a trie given a root hash.
 pub fn verify_proof<'a, L>(

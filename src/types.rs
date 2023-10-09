@@ -34,8 +34,8 @@ impl Default for Keccak256Hasher {
     }
 }
 
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct KeccakHasher;
-
 impl hash_db::Hasher for KeccakHasher {
     type Out = B256;
     const LENGTH: usize = 32;
