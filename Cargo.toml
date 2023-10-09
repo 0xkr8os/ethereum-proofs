@@ -7,13 +7,12 @@ edition = "2021"
 rlp = { version = "0.5.2", default-features = false }
 trie-db = { version = "0.27.1", default-features = false }
 hash-db = { version = "0.16.0", default-features = false }
-tiny-keccak = { version = "2.0.0", default-features = false, features = [
-  "keccak",
-] }
-alloy-primitives = { version = "0.4", default-features = false }
+tiny-keccak = { version = "2.0.0", default-features = false, features = ["keccak"] }
+alloy-primitives = { version = "0.4", default-features = false, features = ["rlp"]}
 alloy-rlp = { version = "0.3.3", default-features = false }
 memorydb = "0.3.0"
 memory-db = "0.32.0"
+hex-literal = "0.4.1"
 
 [features]
 default = ["std"]

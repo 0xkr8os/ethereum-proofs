@@ -14,7 +14,7 @@ use trie_db::{
 #[derive(Default, Clone)]
 pub struct EIP1186Layout<H>(PhantomData<H>);
 
-impl<H: Hasher<Out = B256>> TrieLayout for EIP1186Layout<H> {
+impl<H: Hasher<Out = [u8; 32]>> TrieLayout for EIP1186Layout<H> {
     const USE_EXTENSION: bool = true;
     const ALLOW_EMPTY: bool = false;
     const MAX_INLINE_VALUE: Option<u32> = None;

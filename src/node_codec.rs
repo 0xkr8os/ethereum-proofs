@@ -46,13 +46,13 @@ const HASHED_NULL_NODE: [u8; 32] = [
 
 impl<H> NodeCodec for RlpNodeCodec<H>
 where
-    H: Hasher<Out = B256>,
+    H: Hasher<Out = [u8;32]>,
 {
     type Error = DecoderError;
     type HashOut = H::Out;
 
     fn hashed_null_node() -> H::Out {
-        B256::new(HASHED_NULL_NODE)
+        HASHED_NULL_NODE
     }
 
     fn decode_plan(data: &[u8]) -> Result<NodePlan, Self::Error> {
@@ -174,7 +174,7 @@ where
         let mut stream = RlpStream::new_list(2);
         stream.append(&partial.collect::<Vec<_>>());
         match child_ref {
-            ChildReference::Hash(h) => stream.append(&h.0.as_ref()),
+            ChildReference::Hash(h) => stream.append(&h.as_ref()),
             ChildReference::Inline(inline_data, len) => {
                 let bytes = &AsRef::<[u8]>::as_ref(&inline_data)[..len];
                 stream.append_raw(bytes, 1)
@@ -191,7 +191,7 @@ where
         for child_ref in children {
             match child_ref.borrow() {
                 Some(c) => match c {
-                    ChildReference::Hash(h) => stream.append(&h.0.as_ref()),
+                    ChildReference::Hash(h) => stream.append(&h.as_ref()),
                     ChildReference::Inline(inline_data, len) => {
                         let bytes = &inline_data[..*len];
                         stream.append_raw(bytes, 1)

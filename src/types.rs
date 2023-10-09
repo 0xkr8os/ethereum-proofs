@@ -37,7 +37,7 @@ impl Default for Keccak256Hasher {
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct KeccakHasher;
 impl hash_db::Hasher for KeccakHasher {
-    type Out = B256;
+    type Out = [u8; 32];
     const LENGTH: usize = 32;
 
     fn hash(x: &[u8]) -> Self::Out {
@@ -47,7 +47,7 @@ impl hash_db::Hasher for KeccakHasher {
         keccak_256.update(x);
         keccak_256.finalize(&mut output);
 
-        output.into()
+        output
     }
 
     type StdHasher = Keccak256Hasher;

@@ -19,6 +19,7 @@ version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72a2c1a880fa8257fc585ac82513e0747f54659d005e4ee2538325b2a4986b10"
 dependencies = [
+ "alloy-rlp",
  "bytes",
  "cfg-if",
  "const-hex",
@@ -121,6 +122,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-rlp",
  "hash-db",
+ "hex-literal",
  "memory-db",
  "memorydb",
  "rlp 0.5.2",
@@ -338,6 +340,7 @@ version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95294d6e3a6192f3aabf91c38f56505a625aa495533442744185a36d75a790c4"
 dependencies = [
+ "alloy-rlp",
  "proptest",
  "rand",
  "ruint-macro",
