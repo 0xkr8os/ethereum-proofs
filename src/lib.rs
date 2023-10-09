@@ -31,46 +31,47 @@ use core::panic;
 
 use hash_db::HashDBRef;
 use rstd::{vec::Vec, BTreeMap};
-use trie_db::{DBValue, Result, Result as TrieResult, TrieHash, CError, TrieLayout, HashDB, Hasher, TrieDBBuilder, Recorder, Trie, TrieDB};
+use trie_db::{DBValue, Result as TrieResult, TrieHash, CError, TrieLayout, HashDB, Hasher, TrieDBBuilder, Recorder, Trie, TrieDB, NibbleSlice};
 
 
 use alloy_primitives::{Address, B256, U256};
 
-use eip1186::{_verify_proof, EIP1186Layout};
-use types::KeccakHasher;
+pub use eip1186::{EIP1186Layout, VerifyError, process_node};
 pub type StateProofsInput = BTreeMap<Address, Vec<Vec<u8>>>;
 pub type StorageProofsInput = BTreeMap<Address, BTreeMap<U256, Vec<Vec<u8>>>>;
 
-pub type EIP1186TrieDB<'a> = trie_db::TrieDBBuilder<'a, 'a, EIP1186Layout>;
+//pub type EIP1186TrieDB<'a, H: Hasher> = trie_db::TrieDBBuilder<'a, 'a, EIP1186Layout<H>>;
 
-pub fn verify_proof(root: &B256, proofs: &Vec<Vec<u8>>, key: &[u8], value: Option<&[u8]>) {
-    let res = _verify_proof::<EIP1186Layout>(root, proofs, key, value);
-
-    match &res {
-        Ok(_) => return,
-        Err(eip1186::VerifyError::NonExistingValue(_e)) => {
-            panic!("Non existing value for given key")
-        }
-        Err(eip1186::VerifyError::HashDecodeError(e)) => panic!("Hash decode error: {:?}", e),
-        Err(eip1186::VerifyError::HashMismatch(e)) => panic!("hash mismatch: {:?}", e),
-        Err(eip1186::VerifyError::IncompleteProof) => panic!("Incomplete proof"),
-        Err(eip1186::VerifyError::ValueMismatch(e)) => panic!("Value mismatch: {:?}", e),
-        _ => panic!("Unknown error"),
-    }
+/// Verify a compact proof for key-value pairs in a trie given a root hash.
+pub(crate) fn verify_proof<'a, L>(
+  root: &<L::Hash as Hasher>::Out,
+  proof: &'a [Vec<u8>],
+  raw_key: &'a [u8],
+  expected_value: Option<&[u8]>,
+) -> Result<(), VerifyError<'a, TrieHash<L>, CError<L>>>
+where
+  L: TrieLayout,
+{
+  if proof.is_empty() {
+      return Err(VerifyError::IncompleteProof);
+  }
+  let key = NibbleSlice::new(raw_key);
+  process_node::<L>(Some(root), &proof[0], key, expected_value, &proof[1..])
 }
 
 /// Generate an eip-1186 compatible proof for key-value pairs in a trie given a key.
-pub fn generate_proof(
-  db: &dyn HashDBRef<KeccakHasher, DBValue>,
-  root: &B256,
+pub fn generate_proof<L>(
+  db: &dyn HashDBRef<L::Hash, DBValue>,
+  root: &TrieHash<L>,
   key: &[u8],
-) -> TrieResult<(Vec<Vec<u8>>, Option<Vec<u8>>), TrieHash<EIP1186Layout>, CError<EIP1186Layout>>
-
+) -> TrieResult<(Vec<Vec<u8>>, Option<Vec<u8>>), TrieHash<L>, CError<L>>
+where
+  L: TrieLayout,
 {
-  let mut recorder = Recorder::<EIP1186Layout>::new();
+  let mut recorder = Recorder::<L>::new();
 
   let item = {
-      let trie = TrieDBBuilder::<EIP1186Layout>::new(db, root)
+      let trie = TrieDBBuilder::<L>::new(db, root)
           .with_recorder(&mut recorder)
           .build();
       trie.get(key)?
@@ -79,3 +80,4 @@ pub fn generate_proof(
   let proof: Vec<Vec<u8>> = recorder.drain().into_iter().map(|r| r.data).collect();
   Ok((proof, item))
 }
+

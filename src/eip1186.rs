@@ -1,6 +1,5 @@
 use crate::node_codec;
 use crate::rstd::{result::Result, vec::Vec};
-use crate::types::KeccakHasher;
 
 use core::marker::PhantomData;
 use alloy_primitives::B256;
@@ -13,14 +12,14 @@ use trie_db::{
 };
 
 #[derive(Default, Clone)]
-pub struct EIP1186Layout;
+pub struct EIP1186Layout<H>(PhantomData<H>);
 
-impl TrieLayout for EIP1186Layout {
+impl<H: Hasher<Out = B256>> TrieLayout for EIP1186Layout<H> {
     const USE_EXTENSION: bool = true;
     const ALLOW_EMPTY: bool = false;
     const MAX_INLINE_VALUE: Option<u32> = None;
-    type Hash = KeccakHasher;
-    type Codec = node_codec::RlpNodeCodec<KeccakHasher>;
+    type Hash = H;
+    type Codec = node_codec::RlpNodeCodec<H>;
 }
 
 /// Errors that may occur during proof verification. Most of the errors types simply indicate that
@@ -87,24 +86,9 @@ impl<'a, HO: std::fmt::Debug, CE: std::error::Error + 'static> std::error::Error
     }
 }
 
-/// Verify a compact proof for key-value pairs in a trie given a root hash.
-pub(crate) fn _verify_proof<'a, L>(
-    root: &<L::Hash as Hasher>::Out,
-    proof: &'a [Vec<u8>],
-    raw_key: &'a [u8],
-    expected_value: Option<&[u8]>,
-) -> Result<(), VerifyError<'a, TrieHash<L>, CError<L>>>
-where
-    L: TrieLayout,
-{
-    if proof.is_empty() {
-        return Err(VerifyError::IncompleteProof);
-    }
-    let key = NibbleSlice::new(raw_key);
-    process_node::<L>(Some(root), &proof[0], key, expected_value, &proof[1..])
-}
 
-fn process_node<'a, L>(
+
+pub fn process_node<'a, L>(
     expected_node_hash: Option<&<L::Hash as Hasher>::Out>,
     encoded_node: &'a [u8],
     key: NibbleSlice<'a>,
