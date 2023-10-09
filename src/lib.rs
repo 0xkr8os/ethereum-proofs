@@ -37,10 +37,11 @@ use trie_db::{DBValue, Result as TrieResult, TrieHash, CError, TrieLayout, HashD
 use alloy_primitives::{Address, B256, U256};
 
 pub use eip1186::{EIP1186Layout, VerifyError, process_node};
+pub use types::KeccakHasher;
 pub type StateProofsInput = BTreeMap<Address, Vec<Vec<u8>>>;
 pub type StorageProofsInput = BTreeMap<Address, BTreeMap<U256, Vec<Vec<u8>>>>;
 
-//pub type EIP1186TrieDB<'a, H: Hasher> = trie_db::TrieDBBuilder<'a, 'a, EIP1186Layout<H>>;
+pub type EIP1186TrieDB<'a> = trie_db::TrieDBBuilder<'a, 'a, EIP1186Layout<KeccakHasher>>;
 
 /// Verify a compact proof for key-value pairs in a trie given a root hash.
 pub(crate) fn verify_proof<'a, L>(
