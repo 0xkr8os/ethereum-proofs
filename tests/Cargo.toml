@@ -1,0 +1,17 @@
+[package]
+name = "ethereum-proofs-tests"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+drosera-ethereum-proofs = { path = "../" }
+drosera-prover = { path = "../../prover", version = "0.1.0" }
+drosera-ethereum-rpc = { path = "../../ethereum-rpc", version = "0.1.0" }
+drosera-core = { path = "../../core", version = "0.1.0" }
+
+primitive-types = "0.12.1"
+ethers = { version = "2.0.8" }
+serde = "1.0.188"
+serde_json = "1.0.105"
