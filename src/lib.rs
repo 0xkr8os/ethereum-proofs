@@ -29,7 +29,7 @@ mod rstd {
 
 use core::panic;
 
-use hash_db::{HashDBRef, HashDB, Hasher};
+pub use hash_db::{HashDBRef, HashDB, Hasher};
 use rstd::{vec::Vec, BTreeMap};
 use trie_db::{DBValue, Result as TrieResult, TrieHash, CError, TrieLayout, TrieDBBuilder, Recorder, Trie, TrieDB, NibbleSlice};
 
