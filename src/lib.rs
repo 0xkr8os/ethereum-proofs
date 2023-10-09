@@ -41,10 +41,10 @@ pub use types::KeccakHasher;
 pub type StateProofsInput = BTreeMap<Address, Vec<Vec<u8>>>;
 pub type StorageProofsInput = BTreeMap<Address, BTreeMap<U256, Vec<Vec<u8>>>>;
 
-pub type EIP1186TrieDB<'a> = trie_db::TrieDBBuilder<'a, 'a, EIP1186Layout<KeccakHasher>>;
+pub type EIP1186TrieDB<'a, H> = trie_db::TrieDBBuilder<'a, 'a, EIP1186Layout<H>>;
 
 /// Verify a compact proof for key-value pairs in a trie given a root hash.
-pub(crate) fn verify_proof<'a, L>(
+pub fn verify_proof<'a, L>(
   root: &<L::Hash as Hasher>::Out,
   proof: &'a [Vec<u8>],
   raw_key: &'a [u8],
