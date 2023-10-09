@@ -33,7 +33,7 @@ pub use hash_db::{HashDBRef, HashDB, Hasher};
 use rstd::{vec::Vec, BTreeMap};
 use trie_db::{DBValue, Result as TrieResult, TrieHash, CError, TrieLayout, TrieDBBuilder, Recorder, Trie, TrieDB, NibbleSlice};
 
-use memory_db::{PrefixedKey, MemoryDB};
+use memory_db::{MemoryDB, HashKey};
 use alloy_primitives::{Address, B256, U256};
 
 pub use eip1186::{EIP1186Layout, VerifyError, process_node};
@@ -44,7 +44,7 @@ pub type StorageProofsInput = BTreeMap<Address, BTreeMap<U256, Vec<Vec<u8>>>>;
 pub type EthereumLayout = EIP1186Layout<KeccakHasher>;
 pub type EthereumTrieDB<'db,> = trie_db::SecTrieDBMut<'db, EthereumLayout>;
 pub type EthereumMemoryDB =
-    MemoryDB<<EIP1186Layout<KeccakHasher> as TrieLayout>::Hash, PrefixedKey<<EIP1186Layout<KeccakHasher> as TrieLayout>::Hash>, DBValue>;
+    MemoryDB<<EIP1186Layout<KeccakHasher> as TrieLayout>::Hash, HashKey<<EIP1186Layout<KeccakHasher> as TrieLayout>::Hash>, DBValue>;
 
 /// Verify a compact proof for key-value pairs in a trie given a root hash.
 pub fn verify_proof<'a, L>(
