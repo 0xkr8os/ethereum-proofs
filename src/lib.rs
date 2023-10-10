@@ -86,7 +86,7 @@ where
       let trie = TrieDBBuilder::<L>::new(db, root)
           .with_recorder(&mut recorder)
           .build();
-      trie.get(key)?
+      trie.get(<L::Hash>::hash(key).as_ref())?
   };
 
   let proof: Vec<Vec<u8>> = recorder.drain().into_iter().map(|r| r.data).collect();
