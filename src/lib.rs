@@ -43,7 +43,7 @@ pub type StateProofsInput = BTreeMap<Address, Vec<Vec<u8>>>;
 pub type StorageProofsInput = BTreeMap<Address, BTreeMap<U256, Vec<Vec<u8>>>>;
 
 pub type EthereumLayout = EIP1186Layout<KeccakHasher>;
-pub type EthereumTrieDB<'db,> = trie_db::TrieDBMutBuilder<'db, EthereumLayout>;
+pub type EthereumTrieDB<'db,> = trie_db::SecTrieDBMut<'db, EthereumLayout>;
 pub type EthereumMemoryDB =
     MemoryDB<<EIP1186Layout<KeccakHasher> as TrieLayout>::Hash, HashKey<<EIP1186Layout<KeccakHasher> as TrieLayout>::Hash>, DBValue>;
 
