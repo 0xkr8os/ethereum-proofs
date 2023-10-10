@@ -32,7 +32,7 @@ use core::panic;
 pub use hash_db::{HashDBRef, HashDB, Hasher};
 use rstd::{vec::Vec, BTreeMap};
 use tiny_keccak::Keccak;
-use trie_db::{DBValue, Result as TrieResult, TrieHash, CError, TrieLayout, TrieDBBuilder, Recorder, Trie, TrieDB, NibbleSlice};
+use trie_db::{DBValue, Result as TrieResult, TrieHash, CError, TrieLayout, TrieDBBuilder, Recorder, Trie, TrieDBMut, NibbleSlice};
 
 use memory_db::{MemoryDB, HashKey};
 use alloy_primitives::{Address, B256, U256};
@@ -43,7 +43,7 @@ pub type StateProofsInput = BTreeMap<Address, Vec<Vec<u8>>>;
 pub type StorageProofsInput = BTreeMap<Address, BTreeMap<U256, Vec<Vec<u8>>>>;
 
 pub type EthereumLayout = EIP1186Layout<KeccakHasher>;
-pub type EthereumTrieDB<'db,> = trie_db::TrieDBMut<'db, EthereumLayout>;
+pub type EthereumTrieDB<'db,> = trie_db::TrieDBMutBuilder<'db, EthereumLayout>;
 pub type EthereumMemoryDB =
     MemoryDB<<EIP1186Layout<KeccakHasher> as TrieLayout>::Hash, HashKey<<EIP1186Layout<KeccakHasher> as TrieLayout>::Hash>, DBValue>;
 
