@@ -4,6 +4,7 @@ use crate::rstd::{result::Result, vec::Vec};
 use core::marker::PhantomData;
 use alloy_primitives::B256;
 use hash_db::{HashDBRef, Hasher};
+use trie_db::TrieConfiguration;
 use trie_db::{
     node::{decode_hash, Node, NodeHandle, Value},
     recorder::Recorder,
@@ -14,13 +15,15 @@ use trie_db::{
 #[derive(Default, Clone)]
 pub struct EIP1186Layout<H>(PhantomData<H>);
 
-impl<H: Hasher<Out = [u8; 32]>> TrieLayout for EIP1186Layout<H> {
+impl<H: Hasher> TrieLayout for EIP1186Layout<H> {
     const USE_EXTENSION: bool = true;
     const ALLOW_EMPTY: bool = false;
     const MAX_INLINE_VALUE: Option<u32> = None;
     type Hash = H;
     type Codec = node_codec::RlpNodeCodec<H>;
 }
+
+impl<H: Hasher> TrieConfiguration for EIP1186Layout<H>{}
 
 /// Errors that may occur during proof verification. Most of the errors types simply indicate that
 /// the proof is invalid with respect to the statement being verified, and the exact error type can
@@ -85,8 +88,6 @@ impl<'a, HO: std::fmt::Debug, CE: std::error::Error + 'static> std::error::Error
         }
     }
 }
-
-
 
 pub fn process_node<'a, L>(
     expected_node_hash: Option<&<L::Hash as Hasher>::Out>,

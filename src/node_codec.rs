@@ -35,24 +35,22 @@ use trie_db::{
 
 /// Concrete implementation of a `NodeCodec` with Rlp encoding, generic over the `Hasher`
 #[derive(Default, Clone)]
-pub struct RlpNodeCodec<H: Hasher> {
-    mark: PhantomData<H>,
-}
+pub struct RlpNodeCodec<H>(PhantomData<H>);
 
-const HASHED_NULL_NODE: [u8; 32] = [
+// rlp of empty string
+pub const NULL_NODE: [u8; 1] = [0x80];
+pub const HASHED_NULL_NODE: [u8; 32] = [
     0x56, 0xe8, 0x1f, 0x17, 0x1b, 0xcc, 0x55, 0xa6, 0xff, 0x83, 0x45, 0xe6, 0x92, 0xc0, 0xf8, 0x6e,
     0x5b, 0x48, 0xe0, 0x1b, 0x99, 0x6c, 0xad, 0xc0, 0x01, 0x62, 0x2f, 0xb5, 0xe3, 0x63, 0xb4, 0x21,
 ];
 
-impl<H> NodeCodec for RlpNodeCodec<H>
-where
-    H: Hasher<Out = [u8;32]>,
+impl<H: Hasher> NodeCodec for RlpNodeCodec<H>
 {
     type Error = DecoderError;
     type HashOut = H::Out;
 
     fn hashed_null_node() -> H::Out {
-        HASHED_NULL_NODE
+        H::hash(<Self as NodeCodec>::empty_node())
     }
 
     fn decode_plan(data: &[u8]) -> Result<NodePlan, Self::Error> {
@@ -147,7 +145,7 @@ where
     }
 
     fn empty_node() -> &'static [u8] {
-        &[0x80]
+        &NULL_NODE
     }
 
     fn leaf_node(
@@ -187,13 +185,14 @@ where
         children: impl Iterator<Item = impl Borrow<Option<ChildReference<Self::HashOut>>>>,
         value: Option<Value>,
     ) -> Vec<u8> {
+
         let mut stream = RlpStream::new_list(17);
         for child_ref in children {
             match child_ref.borrow() {
                 Some(c) => match c {
                     ChildReference::Hash(h) => stream.append(&h.as_ref()),
                     ChildReference::Inline(inline_data, len) => {
-                        let bytes = &inline_data[..*len];
+                        let bytes = &inline_data.as_ref()[..*len];
                         stream.append_raw(bytes, 1)
                     }
                 },

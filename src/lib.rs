@@ -30,6 +30,7 @@ mod rstd {
 use core::panic;
 
 pub use hash_db::{HashDBRef, HashDB, Hasher};
+use node_codec::NULL_NODE;
 use rstd::{vec::Vec, BTreeMap};
 use tiny_keccak::Keccak;
 use trie_db::{DBValue, Result as TrieResult, TrieHash, CError, TrieLayout, TrieDBBuilder, Recorder, Trie, TrieDBMut, NibbleSlice};
@@ -49,6 +50,9 @@ pub type EthereumMemoryDB =
 
 pub type AsHashDB = Box<dyn HashDB<KeccakHasher, Vec<u8>>>;
 
+pub fn empty_ethereum_db() -> EthereumMemoryDB {
+  EthereumMemoryDB::from_null_node(&NULL_NODE, NULL_NODE.to_vec())
+}
 
 /// Verify a compact proof for key-value pairs in a trie given a root hash.
 pub fn verify_proof<'a, L>(
@@ -89,20 +93,17 @@ where
   Ok((proof, item))
 }
 
-
-
-
-
-
-
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use alloy_primitives::hex as _hex;
     use hex_literal::hex;
 
     use alloy_primitives::{ Hasher};
     use alloy_rlp::{encode_list, Encodable};
+    use reference_trie::{RefTrieDBMutBuilder, RefSecTrieDBMut};
+    use trie_db::TrieMut;
 
     pub fn keccak256(x: &[u8]) -> [u8; 32] {
       let mut keccak_256: Keccak = Keccak::v256();
@@ -156,7 +157,7 @@ mod tests {
             .unwrap();
 
         let value = rlp_encode_account(&nonce, &balance, &storage_root, &code_hash);
-
+        println!("value: {:?}", _hex::encode(&value));
         verify_proof::<EthereumLayout>(&root, &proofs, &key, Some(&value)).unwrap();
     }
 
@@ -228,7 +229,14 @@ mod tests {
     }
 
     #[test]
-      fn it_should_generate_proof(){
+      fn it_should_insert_account(){
+        let mut db = empty_ethereum_db();
+        let mut root = B256::default();
         
+        let address = Address::default();
+        let value = _hex::decode("f8440180a00f460850d9716af3371839ff600d3d57ce12da330e95ac16f91da485fd8bd6c6a01e1706bdc2b9de10c4075b84a6181920bb73d94a161cb8044fc5d1c800030627").unwrap();
+    
+        let mut trie = EthereumTrieDB::new(&mut db, &mut root.0);
+        trie.insert(&address.0.0, &value).unwrap();
       }
 }
