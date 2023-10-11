@@ -2,20 +2,17 @@ use crate::node_codec;
 use crate::rstd::{result::Result, vec::Vec};
 
 use core::marker::PhantomData;
-use alloy_primitives::B256;
-use hash_db::{HashDBRef, Hasher};
-use trie_db::TrieConfiguration;
+use hash_db::Hasher;
 use trie_db::{
     node::{decode_hash, Node, NodeHandle, Value},
-    recorder::Recorder,
-    CError, DBValue, NibbleSlice, NodeCodec, Result as TrieResult, Trie, TrieDBBuilder, TrieHash,
+    CError, NibbleSlice, NodeCodec, TrieHash,
     TrieLayout,
 };
 
 #[derive(Default, Clone)]
-pub struct EIP1186Layout<H>(PhantomData<H>);
+pub struct RlpTrieLayout<H>(PhantomData<H>);
 
-impl<H: Hasher> TrieLayout for EIP1186Layout<H> {
+impl<H: Hasher> TrieLayout for RlpTrieLayout<H> {
     const USE_EXTENSION: bool = true;
     const ALLOW_EMPTY: bool = false;
     const MAX_INLINE_VALUE: Option<u32> = None;
@@ -87,7 +84,7 @@ impl<'a, HO: std::fmt::Debug, CE: std::error::Error + 'static> std::error::Error
     }
 }
 
-pub fn process_node<'a, L>(
+pub(crate) fn process_node<'a, L>(
     expected_node_hash: Option<&<L::Hash as Hasher>::Out>,
     encoded_node: &'a [u8],
     key: NibbleSlice<'a>,
@@ -154,7 +151,6 @@ where
     if key != nib && expected_value.is_none() {
         return Ok(());
     } else if key != nib {
-        // println!("Nib: {:?}", encode(nib.original_data_as_prefix().0));
         return Err(VerifyError::NonExistingValue(key));
     }
     match_value::<L>(Some(data), key, expected_value, proof)
@@ -172,8 +168,6 @@ where
     if !key.starts_with(nib) && expected_value.is_none() {
         return Ok(());
     } else if !key.starts_with(nib) {
-        // println!("process extension");
-
         return Err(VerifyError::NonExistingValue(key));
     }
     key.advance(nib.len());
@@ -260,7 +254,6 @@ where
             if expected_value.is_none() {
                 Ok(())
             } else {
-                // println!("match children");
                 Err(VerifyError::NonExistingValue(key))
             }
         }
@@ -277,7 +270,7 @@ fn match_value<'a, L>(
 where
     L: TrieLayout,
 {
-    // println!("match_value");
+    println!("match_value");
     match (maybe_data, proof.first(), expected_value) {
         (None, _, None) => Ok(()),
         (None, _, Some(_)) => Err(VerifyError::NonExistingValue(key)),

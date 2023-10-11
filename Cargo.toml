@@ -5,17 +5,11 @@ edition = "2021"
 
 [dependencies]
 rlp = { version = "0.5.2", default-features = false }
-trie-db = { git = "https://github.com/0xkr8os/trie", rev="cea05a4"}
-hash-db = { git = "https://github.com/0xkr8os/trie", rev="cea05a4" }
+trie-db = { version = "0.28.0", default-features = false }
+hash-db = { version = "0.16.0", default-features = false }
 tiny-keccak = { version = "2.0.0", default-features = false, features = ["keccak"] }
-alloy-primitives = { version = "0.4", default-features = false, features = ["rlp"]}
-alloy-rlp = { version = "0.3.3", default-features = false }
-memory-db = { git = "https://github.com/0xkr8os/trie", rev="cea05a4" }
-hex-literal = "0.4.1"
-reference-trie = { git = "https://github.com/0xkr8os/trie", rev="cea05a4" }
-pretty_env_logger = "0.5.0"
-log = "0.4.20"
+memory-db = { version = "0.32.0", default-features = false }
 
 [features]
 default = ["std"]
-std = ["trie-db/std", "hash-db/std", "rlp/std"]
+std = ["trie-db/std", "hash-db/std", "rlp/std", "memory-db/std"]

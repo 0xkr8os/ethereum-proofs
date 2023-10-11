@@ -18,8 +18,6 @@
 
 use crate::rstd::vec::Vec;
 use core::{borrow::Borrow, marker::PhantomData};
-use alloy_primitives::B256;
-use alloy_rlp::*;
 use hash_db::Hasher;
 
 #[cfg(feature = "std")]
@@ -30,7 +28,7 @@ use rlp::{DecoderError, Prototype, Rlp, RlpStream};
 
 use trie_db::{
     node::{NibbleSlicePlan, NodeHandlePlan, NodePlan, Value, ValuePlan},
-    ChildReference, NodeCodec, NibbleSlice,
+    ChildReference, NodeCodec,
 };
 
 /// Concrete implementation of a `NodeCodec` with Rlp encoding, generic over the `Hasher`

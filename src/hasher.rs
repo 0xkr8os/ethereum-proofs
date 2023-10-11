@@ -1,5 +1,4 @@
 use core::hash::Hasher;
-use alloy_primitives::{B256, U256};
 use tiny_keccak::{Hasher as CoreHasher, Keccak};
 
 pub struct Keccak256Hasher {
@@ -36,6 +35,7 @@ impl Default for Keccak256Hasher {
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct KeccakHasher;
+
 impl hash_db::Hasher for KeccakHasher {
     type Out = [u8; 32];
     const LENGTH: usize = 32;
@@ -52,23 +52,3 @@ impl hash_db::Hasher for KeccakHasher {
 
     type StdHasher = Keccak256Hasher;
 }
-
-// Trie layout for EIP-1186 state proof nodes.
-
-pub struct AccountState {
-    pub nonce: u64,
-    pub balance: U256,
-    pub storage_hash: B256,
-    pub code_hash: B256,
-}
-
-// impl AccountState {
-//     pub fn rlp_encode(&self) -> Vec<u8> {
-//         let mut stream = RlpStream::new_list(4);
-//         stream.append(&self.nonce);
-//         stream.append(&self.balance);
-//         stream.append(&self.storage_hash.as_slice());
-//         stream.append(&self.code_hash.as_slice());
-//         stream.out().to_vec()
-//     }
-// }
