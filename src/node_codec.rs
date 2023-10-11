@@ -30,7 +30,7 @@ use rlp::{DecoderError, Prototype, Rlp, RlpStream};
 
 use trie_db::{
     node::{NibbleSlicePlan, NodeHandlePlan, NodePlan, Value, ValuePlan},
-    ChildReference, NodeCodec,
+    ChildReference, NodeCodec, NibbleSlice,
 };
 
 /// Concrete implementation of a `NodeCodec` with Rlp encoding, generic over the `Hasher`
@@ -73,7 +73,7 @@ impl<H: Hasher> NodeCodec for RlpNodeCodec<H>
                 match (
                     NibbleSlicePlan::new(
                         (offset + i.header_len)..(offset + i.header_len + i.value_len),
-                        if data[0] & 16 == 16 { 1 } else { 2 },
+                        if data[0] & 16 == 16 { 0 } else { 1 },
                     ),
                     data[0] & 32 == 32,
                 ) {
@@ -132,7 +132,7 @@ impl<H: Hasher> NodeCodec for RlpNodeCodec<H>
                         }
                     },
                 })
-            }
+            },
             // an empty branch index.
             Prototype::Data(0) => Ok(NodePlan::Empty),
             // something went wrong.
@@ -141,7 +141,7 @@ impl<H: Hasher> NodeCodec for RlpNodeCodec<H>
     }
 
     fn is_empty_node(data: &[u8]) -> bool {
-        Rlp::new(data).is_empty()
+        data == <Self as NodeCodec>::empty_node()
     }
 
     fn empty_node() -> &'static [u8] {

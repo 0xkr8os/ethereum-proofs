@@ -23,8 +23,6 @@ impl<H: Hasher> TrieLayout for EIP1186Layout<H> {
     type Codec = node_codec::RlpNodeCodec<H>;
 }
 
-impl<H: Hasher> TrieConfiguration for EIP1186Layout<H>{}
-
 /// Errors that may occur during proof verification. Most of the errors types simply indicate that
 /// the proof is invalid with respect to the statement being verified, and the exact error type can
 /// be used for debugging.

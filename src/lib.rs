@@ -4,6 +4,7 @@ pub mod eip1186;
 pub mod node_codec;
 pub mod types;
 pub mod utils;
+// pub mod node_codec2;
 
 #[cfg(feature = "std")]
 mod rstd {
@@ -26,29 +27,34 @@ mod rstd {
     pub trait Error {}
     impl<T> Error for T {}
 }
-
+//f842a0798c6047767c10f653ca157a7f66a592a1d6ca550cae352912be0b0745336afda03632d4347b4b1be5324b37672b7a6b60428d6bc74bcc0dcab418a3c4cf1421e7
+//41798c6047767c10f653ca157a7f66a592a1d6ca550cae352912be0b0745336afd1901f8440180a00f460850d9716af3371839ff600d3d57ce12da330e95ac16f91da485fd8bd6c6a01e1706bdc2b9de10c4075b84a6181920bb73d94a161cb8044fc5d1c800030627
+//f869a0798c6047767c10f653ca157a7f66a592a1d6ca550cae352912be0b0745336afdb846f8440180a00f460850d9716af3371839ff600d3d57ce12da330e95ac16f91da485fd8bd6c6a01e1706bdc2b9de10c4075b84a6181920bb73d94a161cb8044fc5d1c800030627
 use core::panic;
 
 pub use hash_db::{HashDBRef, HashDB, Hasher};
 use node_codec::NULL_NODE;
+use reference_trie::*;
 use rstd::{vec::Vec, BTreeMap};
 use tiny_keccak::Keccak;
-use trie_db::{DBValue, Result as TrieResult, TrieHash, CError, TrieLayout, TrieDBBuilder, Recorder, Trie, TrieDBMut, NibbleSlice};
+use trie_db::SecTrieDB;
+use trie_db::{DBValue, Result as TrieResult, TrieHash, CError, TrieLayout, TrieDBBuilder, Recorder, Trie, TrieDBMut, NodeCodec, NibbleSlice, TrieDBMutBuilder};
 
 use memory_db::{MemoryDB, HashKey};
-use alloy_primitives::{Address, B256, U256};
+use alloy_primitives::{Address, B256, U256, hex, keccak256};
 
 pub use eip1186::{EIP1186Layout, VerifyError, process_node};
 pub use types::KeccakHasher;
 pub type StateProofsInput = BTreeMap<Address, Vec<Vec<u8>>>;
 pub type StorageProofsInput = BTreeMap<Address, BTreeMap<U256, Vec<Vec<u8>>>>;
 
-pub type EthereumLayout = EIP1186Layout<KeccakHasher>;
-pub type EthereumTrieDB<'db,> = trie_db::SecTrieDBMut<'db, EthereumLayout>;
+pub type EthereumLayout = EIP1186Layout<reference_trie::RefHasher>;
 pub type EthereumMemoryDB =
     MemoryDB<<EIP1186Layout<KeccakHasher> as TrieLayout>::Hash, HashKey<<EIP1186Layout<KeccakHasher> as TrieLayout>::Hash>, DBValue>;
-
+use trie_db::TrieMut;
 pub type AsHashDB = Box<dyn HashDB<KeccakHasher, Vec<u8>>>;
+
+use trie_db::SecTrieDBMut;
 
 pub fn empty_ethereum_db() -> EthereumMemoryDB {
   EthereumMemoryDB::from_null_node(&NULL_NODE, NULL_NODE.to_vec())
@@ -71,39 +77,80 @@ where
   process_node::<L>(Some(root), &proof[0], key, expected_value, &proof[1..])
 }
 
-/// Generate an eip-1186 compatible proof for key-value pairs in a trie given a key.
 pub fn generate_proof<L>(
-  db: &dyn HashDBRef<L::Hash, DBValue>,
-  root: &TrieHash<L>,
-  key: &[u8],
+	db: &dyn HashDBRef<L::Hash, DBValue>,
+	root: &TrieHash<L>,
+	key: &[u8],
 ) -> TrieResult<(Vec<Vec<u8>>, Option<Vec<u8>>), TrieHash<L>, CError<L>>
 where
-  L: TrieLayout,
+	L: TrieLayout,
 {
-  let mut recorder = Recorder::<L>::new();
+	let mut recorder = Recorder::<L>::new();
+
 
   let item = {
-      let trie = TrieDBBuilder::<L>::new(db, root)
-          .with_recorder(&mut recorder)
-          .build();
-      trie.get(<L::Hash>::hash(key).as_ref())?
-  };
+		let trie = TrieDBBuilder::<L>::new(db, root).with_recorder(&mut recorder).build();
+		//trie.get(<L::Hash>::hash(key).as_ref())?
+    trie.get_with(<L::Hash>::hash(key).as_ref(), |v: &[u8]| v.to_vec())?
+	};
 
-  let proof: Vec<Vec<u8>> = recorder.drain().into_iter().map(|r| r.data).collect();
-  Ok((proof, item))
+	let proof: Vec<Vec<u8>> = recorder.drain().into_iter().map(|r| r.data).collect();
+  println!("proof: {:?}", hex::encode(&proof[0]));
+	Ok((proof, item))
 }
+
+fn test_generate_proof<L: TrieLayout>(
+	entries: Vec<(&[u8], &[u8])>,
+	key: &[u8],
+) -> (<L::Hash as Hasher>::Out, Vec<Vec<u8>>, Option<Vec<u8>>) {
+	// Populate DB with full trie from entries.
+  
+	let (db, root) = {
+		//let mut db = <MemoryDB<_, HashKey<_>, DBValue>>::default();
+    let mut db = <MemoryDB<_, HashKey<_>, DBValue>>::new(&NULL_NODE);
+		let mut root = Default::default();
+		{
+			let mut trie = <SecTrieDBMut<L>>::new(&mut db, &mut root);
+			for (key, value) in entries.iter() {
+				trie.insert(key, value).unwrap();
+			}
+      println!("key {:?}", key);
+      println!("key hashed: {:?}", <L::Hash>::hash(&key).as_ref());
+      println!("item {:?}", trie.get(&key).unwrap().unwrap());
+      // println!("root{:?}", hex::encode(trie.root()));
+		}
+		(db, root)
+	};
+	// Generate proof for the given keys..
+	let proof = generate_proof::<L>(&db, &root, key).unwrap();
+	(root, proof.0, proof.1)
+}
+
+/// Generate an eip-1186 compatible proof for key-value pairs in a trie given a key.
+// #[derive(Default, Clone)]
+// pub struct ExtensionLayout;
+
+// impl TrieLayout for ExtensionLayout {
+// 	const USE_EXTENSION: bool = true;
+// 	const ALLOW_EMPTY: bool = false;
+// 	const MAX_INLINE_VALUE: Option<u32> = None;
+// 	type Hash = KeccakHasher;
+// 	type Codec = ReferenceNodeCodec<KeccakHasher>;
+// }
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use alloy_primitives::hex as _hex;
+    use alloy_primitives::{hex as _hex, address};
+    use hash_db::AsHashDB;
     use hex_literal::hex;
 
     use alloy_primitives::{ Hasher};
     use alloy_rlp::{encode_list, Encodable};
-    use reference_trie::{RefTrieDBMutBuilder, RefSecTrieDBMut};
-    use trie_db::TrieMut;
+ 
+    use trie_db::TrieLayout;
+
 
     pub fn keccak256(x: &[u8]) -> [u8; 32] {
       let mut keccak_256: Keccak = Keccak::v256();
@@ -236,7 +283,63 @@ mod tests {
         let address = Address::default();
         let value = _hex::decode("f8440180a00f460850d9716af3371839ff600d3d57ce12da330e95ac16f91da485fd8bd6c6a01e1706bdc2b9de10c4075b84a6181920bb73d94a161cb8044fc5d1c800030627").unwrap();
     
-        let mut trie = EthereumTrieDB::new(&mut db, &mut root.0);
-        trie.insert(&address.0.0, &value).unwrap();
+        // let mut trie = EthereumTrieDB::new(&mut db, &mut root.0).build();
+        // trie.insert(&address.0.0, &value).unwrap();
+      }
+
+      fn test_entries() -> Vec<(&'static [u8], &'static [u8])> {
+        vec![
+          // "alfa" is at a hash-referenced leaf node.
+          (b"alfa", &[0; 32]),
+          // "bravo" is at an inline leaf node.
+          (b"bravo", b"bravo"),
+          // "do" is at a hash-referenced branch node.
+          (b"do", b"verb"),
+          // "dog" is at a hash-referenced branch node.
+          (b"dog", b"puppy"),
+          // "doge" is at a hash-referenced leaf node.
+          (b"doge", &[0; 32]),
+          // extension node "o" (plus nibble) to next branch.
+          (b"horse", b"stallion"),
+          (b"house", b"building"),
+        ]
+      }
+
+      #[test]
+      fn it_should_generate_proof(){
+        std::env::set_var("RUST_LOG", "trace");
+        pretty_env_logger::init();
+        let address = Address::from_slice(&hex!["e7f1725E7734CE288F8367e1Bb143E90bb3F0512"]);
+   
+        let key = address.as_slice();
+        let value = _hex!["f8440180a00f460850d9716af3371839ff600d3d57ce12da330e95ac16f91da485fd8bd6c6a01e1706bdc2b9de10c4075b84a6181920bb73d94a161cb8044fc5d1c800030627"].as_slice();
+        // println!("address: {:?}", address);
+        // println!("key: {:?}", _hex::encode(key));
+        // let key = test_entries()[0].0;
+        let entries = vec![(key.clone(), value)];
+        let (root, proof, item) = test_generate_proof::<EthereumLayout>(vec![(key, value)], &key);
+        println!("proofs: {:?}", proof);
+        println!("item: {:?}", item);
+        assert!(item.is_some());
+      
+        
+        
+
+        // let trie = TrieDBBuilder::<EthereumLayout>::new(&db, &root).build();
+         
+        // println!("post root: {:?}", _hex::encode(trie.root()));
+        // println!("{:?}", trie.get(&key).unwrap());
+        // db.keys().iter().for_each(|(k, r)| {
+        //   println!("key: {:?}", _hex::encode(k));
+        // });
+
+        // println!("contains: {:?}", trie.contains(&keccak256(b"alfa")).unwrap());
+
+
+        // let item = trie_db::TrieDBBuilder::<ExtensionLayout>::new(&db, &root).build().get(&key).unwrap();
+        // println!("proofs: {:?}", proofs);
+        // println!("item: {:?}", item);
+        // assert!(proofs.len() > 0 );
+        
       }
 }
