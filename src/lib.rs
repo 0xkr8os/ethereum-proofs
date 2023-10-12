@@ -112,12 +112,12 @@ mod tests {
       #[test]
       fn it_should_generate_verifiable_proof(){
         let entries = test_entries();
-        let key = entries[0].0;
-        let value = entries[0].1;
+        let key = entries[1].0;
+        let value = entries[1].1;
 
         let (root, proof, item) = test_generate_proof::<EthereumLayout>(entries, key);
         assert!(item.is_some());
-
+        println!("{:?}", item.unwrap());
         let test = [0; 32];
         println!("test: {:?}", test.len());
 
