@@ -36,6 +36,7 @@ name = "ethereum-proofs"
 version = "0.1.0"
 dependencies = [
  "hash-db",
+ "hex",
  "log",
  "memory-db",
  "rlp",
@@ -57,6 +58,12 @@ checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
 dependencies = [
  "ahash",
 ]
+
+[[package]]
+name = "hex"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "log"

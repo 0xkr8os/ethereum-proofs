@@ -24,6 +24,7 @@ use hash_db::Hasher;
 mod rstd {
     pub use std::error::Error;
 }
+
 use rlp::{DecoderError, Prototype, Rlp, RlpStream};
 
 use trie_db::{
@@ -78,7 +79,7 @@ impl<H: Hasher> NodeCodec for RlpNodeCodec<H>
                     data[0] & 32 == 32,
                 ) {
                     (slice, true) => {
-                        trace!(target: "rlp node", "Decoding leaf node: {:?}", slice);
+                        trace!("Decoding leaf node: {:?}", slice);
                         Ok(NodePlan::Leaf {
                           partial: slice,
                           value: {
@@ -91,7 +92,7 @@ impl<H: Hasher> NodeCodec for RlpNodeCodec<H>
                       })
                     },
                     (slice, false) => {
-                        trace!(target: "rlp node", "Decoding extension node: {:?}", slice);
+                        trace!("Decoding extension node: {:?}", slice);
                         Ok(NodePlan::Extension {
                           partial: slice,
                           child: {
@@ -107,7 +108,7 @@ impl<H: Hasher> NodeCodec for RlpNodeCodec<H>
             }
             // branch - first 16 are nodes, 17th is a value (or empty).
             Prototype::List(17) => {
-                trace!(target: "rlp node", "Decoding branch node");
+                trace!("Decoding branch node");
                 let mut nodes = [
                     None, None, None, None, None, None, None, None, None, None, None, None, None,
                     None, None, None,
@@ -144,7 +145,7 @@ impl<H: Hasher> NodeCodec for RlpNodeCodec<H>
             Prototype::Data(0) => Ok(NodePlan::Empty),
             // something went wrong.
             _ => {
-              trace!("Failed to decode Rlp data: {:?}", data);
+              trace!("Failed to decode Rlp data: {:?}", hex::encode(data));
               Err(DecoderError::Custom("Rlp is not valid."))
             }
         }
