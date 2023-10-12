@@ -30,6 +30,7 @@ use trie_db::{
     node::{NibbleSlicePlan, NodeHandlePlan, NodePlan, Value, ValuePlan},
     ChildReference, NodeCodec,
 };
+use log::trace;
 
 /// Concrete implementation of a `NodeCodec` with Rlp encoding, generic over the `Hasher`
 #[derive(Default, Clone)]
@@ -56,6 +57,7 @@ impl<H: Hasher> NodeCodec for RlpNodeCodec<H>
             // early return if this is == keccak(rlp(null)), aka empty trie root
             // source: https://ethereum.github.io/execution-specs/diffs/frontier_homestead/trie/index.html#empty-trie-root
             return Ok(NodePlan::Empty);
+            
         }
 
         let r = Rlp::new(data);
@@ -75,30 +77,37 @@ impl<H: Hasher> NodeCodec for RlpNodeCodec<H>
                     ),
                     data[0] & 32 == 32,
                 ) {
-                    (slice, true) => Ok(NodePlan::Leaf {
-                        partial: slice,
-                        value: {
-                            let (item, offset) = r.at_with_offset(1)?;
-                            let i = item.payload_info()?;
-                            ValuePlan::Inline(
-                                (offset + i.header_len)..(offset + i.header_len + i.value_len),
-                            )
-                        },
-                    }),
-                    (slice, false) => Ok(NodePlan::Extension {
-                        partial: slice,
-                        child: {
-                            let (item, offset) = r.at_with_offset(1)?;
-                            let i = item.payload_info()?;
-                            NodeHandlePlan::Hash(
-                                (offset + i.header_len)..(offset + i.header_len + i.value_len),
-                            )
-                        },
-                    }),
+                    (slice, true) => {
+                        trace!(target: "rlp node", "Decoding leaf node: {:?}", slice);
+                        Ok(NodePlan::Leaf {
+                          partial: slice,
+                          value: {
+                              let (item, offset) = r.at_with_offset(1)?;
+                              let i = item.payload_info()?;
+                              ValuePlan::Inline(
+                                  (offset + i.header_len)..(offset + i.header_len + i.value_len),
+                              )
+                          },
+                      })
+                    },
+                    (slice, false) => {
+                        trace!(target: "rlp node", "Decoding extension node: {:?}", slice);
+                        Ok(NodePlan::Extension {
+                          partial: slice,
+                          child: {
+                              let (item, offset) = r.at_with_offset(1)?;
+                              let i = item.payload_info()?;
+                              NodeHandlePlan::Hash(
+                                  (offset + i.header_len)..(offset + i.header_len + i.value_len),
+                              )
+                          },
+                      })
+                    },
                 }
             }
             // branch - first 16 are nodes, 17th is a value (or empty).
             Prototype::List(17) => {
+                trace!(target: "rlp node", "Decoding branch node");
                 let mut nodes = [
                     None, None, None, None, None, None, None, None, None, None, None, None, None,
                     None, None, None,
@@ -134,7 +143,10 @@ impl<H: Hasher> NodeCodec for RlpNodeCodec<H>
             // an empty branch index.
             Prototype::Data(0) => Ok(NodePlan::Empty),
             // something went wrong.
-            _ => Err(DecoderError::Custom("Rlp is not valid.")),
+            _ => {
+              trace!("Failed to decode Rlp data: {:?}", data);
+              Err(DecoderError::Custom("Rlp is not valid."))
+            }
         }
     }
 

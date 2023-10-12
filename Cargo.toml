@@ -9,6 +9,7 @@ trie-db = { version = "0.28.0", default-features = false }
 hash-db = { version = "0.16.0", default-features = false }
 tiny-keccak = { version = "2.0.0", default-features = false, features = ["keccak"] }
 memory-db = { version = "0.32.0", default-features = false }
+log = "0.4.20"
 
 [features]
 default = ["std"]

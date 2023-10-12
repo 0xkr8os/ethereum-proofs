@@ -36,6 +36,7 @@ name = "ethereum-proofs"
 version = "0.1.0"
 dependencies = [
  "hash-db",
+ "log",
  "memory-db",
  "rlp",
  "tiny-keccak",
