@@ -79,7 +79,7 @@ impl<H: Hasher> NodeCodec for RlpNodeCodec<H>
             let is_leaf = partial_header & 32 == 32;
             // Check the header bit to see if we're dealing with an odd partial (only a nibble of header info)
             // or an even partial (skip a full byte).
-            let (start, byte_offset) = if partial_header & 16 == 16 { (0, 1) } else { (1, 0) };
+            let (start, byte_offset) = if partial_header & 16 == 16 { (0, 0) } else { (1, 1) };
             let range = (partial_offset + start)..(partial_offset + partial_payload.value_len);
             (NibbleSlicePlan::new(range, byte_offset), is_leaf)
           };
