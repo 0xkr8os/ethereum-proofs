@@ -118,7 +118,10 @@ mod tests {
         let (root, proof, item) = test_generate_proof::<EthereumLayout>(entries, key);
         assert!(item.is_some());
 
-        verify_proof::<EthereumLayout>(&root, &proof, &KeccakHasher::hash(key), Some(value)).expect("Failed to verify generated proof");
+        let test = [0; 32];
+        println!("test: {:?}", test.len());
+
+        verify_proof::<EthereumLayout>(&root, &proof, &KeccakHasher::hash(key), Some(&KeccakHasher::hash(value))).expect("Failed to verify generated proof");
       }
 
       fn test_generate_proof<L: TrieLayout>(
