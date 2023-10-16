@@ -88,45 +88,54 @@ where
 mod tests {
     use super::*;
 
+    use alloy_rlp::{Encodable, encode_list};
+    use revm::primitives::AccountInfo;
     use trie_db::{TrieLayout, SecTrieDBMut, TrieMut};
     use hash_db::Hasher;
+    use ethers::{prelude::*, types::spoof::Account};
 
-      fn test_entries() -> Vec<(&'static [u8], &'static [u8])> {
-        vec![
-          // "alfa" is at a hash-referenced leaf node.
-          (b"alfa", &[0; 32]),
-          // "bravo" is at an inline leaf node.
-          (b"bravo", b"bravo"),
-          // "do" is at a hash-referenced branch node.
-          (b"do", b"verb"),
-          // "dog" is at a hash-referenced branch node.
-          (b"dog", b"puppy"),
-          // "doge" is at a hash-referenced leaf node.
-          (b"doge", &[0; 32]),
-          // extension node "o" (plus nibble) to next branch.
-          (b"horse", b"stallion"),
-          (b"house", b"building"),
-        ]
+      fn test_entries() -> Vec<(Vec<u8>, Vec<u8>)> {
+        let mut entries = Vec::new();
+        for _ in 0..3{
+          entries.push(random_test_account());
+        };
+        return entries;
+      }
+
+      fn random_test_account() -> (Vec<u8>, Vec<u8>){
+        let address = Address::random();
+        let account = AccountInfo::default();
+        
+        let mut out = Vec::new();
+        let enc: [&dyn Encodable; 4] = [&account.nonce, &account.balance, &H256::random().0, &account.code_hash.0];
+        encode_list::<_, dyn Encodable>(&enc, &mut out);
+    
+        (address.0.to_vec(), out)
       }
 
       #[test]
       fn it_should_generate_verifiable_proof(){
+        std::env::set_var("RUST_LOG", "trace");
+        pretty_env_logger::init();
         let entries = test_entries();
-        let key = entries[1].0;
-        let value = entries[1].1;
+        let key = entries[0].0.clone();
+        let value = entries[0].1.clone();
+        
+        // println!("key 0: {:?}", KeccakHasher::hash(&key));
+        // println!("key 1: {:?}", KeccakHasher::hash(&entries[1].0.clone()));
 
-        let (root, proof, item) = test_generate_proof::<EthereumLayout>(entries, key);
+        let (root, proof, item) = test_generate_proof::<EthereumLayout>(entries, key.clone());
         assert!(item.is_some());
         println!("{:?}", item.unwrap());
         let test = [0; 32];
         println!("test: {:?}", test.len());
-
-        verify_proof::<EthereumLayout>(&root, &proof, &KeccakHasher::hash(key), Some(value)).expect("Failed to verify generated proof");
+        println!("value: {:?}", value);
+        verify_proof::<EthereumLayout>(&root, &proof, &KeccakHasher::hash(&key), Some(&value)).expect("Failed to verify generated proof");
       }
 
       fn test_generate_proof<L: TrieLayout>(
-        entries: Vec<(&[u8], &[u8])>,
-        key: &[u8],
+        entries: Vec<(Vec<u8>, Vec<u8>)>,
+        key: Vec<u8>,
       ) -> (<L::Hash as Hasher>::Out, Vec<Vec<u8>>, Option<Vec<u8>>) {
         // Populate DB with full trie from entries.
         
@@ -143,7 +152,7 @@ mod tests {
           (db, root)
         };
         // Generate proof for the given keys..
-        let (proof, item) = generate_proof::<L>(&db, &root, key).unwrap();
+        let (proof, item) = generate_proof::<L>(&db, &root, &key).unwrap();
         (root, proof, item)
       }
 }

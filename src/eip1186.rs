@@ -15,7 +15,7 @@ pub struct RlpTrieLayout<H>(PhantomData<H>);
 impl<H: Hasher> TrieLayout for RlpTrieLayout<H> {
     const USE_EXTENSION: bool = true;
     const ALLOW_EMPTY: bool = false;
-    const MAX_INLINE_VALUE: Option<u32> = Some(32);
+    const MAX_INLINE_VALUE: Option<u32> = None;
     type Hash = H;
     type Codec = node_codec::RlpNodeCodec<H>;
 }
@@ -155,6 +155,7 @@ where
     }
     match_value::<L>(Some(data), key, expected_value, proof)
 }
+
 fn process_extension<'a, L>(
     nib: &NibbleSlice,
     handle: NodeHandle<'a>,
